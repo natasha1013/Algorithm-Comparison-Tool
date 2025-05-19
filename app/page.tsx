@@ -24,23 +24,41 @@ export default function Home() {
   const [endRow, setEndRow] = useState(dataSize - 1)
   const [algorithmSteps, setAlgorithmSteps] = useState<any[]>([])
 
-  const handleGenerateData = () => {
-    // Simple placeholder function to generate random data
-    const newData = Array.from({ length: dataSize }, () => Math.floor(Math.random() * 1000))
-    setDataset(newData)
-    setStartRow(0)
-    setEndRow(Math.min(dataSize - 1, 999))
-  }
+  const handleGenerateData = async () => {
+    try {
+      // Build URL with query param n=dataSize
+      const url = `https://improved-space-eureka-69gjwr5q5pqc47r-5000.app.github.dev/generate?n=${dataSize}`;
 
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      // Parse JSON array of dataset objects [{int:..., string:...}, ...]
+      const dataset = await response.json();
+
+      setDataset(dataset);
+
+      setStartRow(0);
+      setEndRow(Math.min(dataSize - 1));
+    } catch (error) {
+      console.error("Failed to generate data:", error);
+      // Optionally notify user
+    }
+  };
+
+  // not yet implemented
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Placeholder for file upload
     console.log("File selected:", e.target.files?.[0]?.name)
   }
 
   const handleDownloadDataset = () => {
-    // Placeholder for download functionality
-    console.log("Download dataset")
-  }
+    const url = `https://improved-space-eureka-69gjwr5q5pqc47r-5000.app.github.dev/download?n=${dataSize}`;
+
+    // Simply open the URL in a new tab or trigger a download
+    window.open(url, "_blank");
+  };
 
   const handleRunAlgorithm = () => {
     if (dataset.length === 0) {
@@ -82,17 +100,21 @@ export default function Home() {
               <Label htmlFor="dataSize">Dataset Size: {dataSize}</Label>
               <Slider
                 id="dataSize"
-                min={10}
-                max={1000}
-                step={10}
+                min={50}
+                max={1000000}
+                step={50}
                 value={[dataSize]}
                 onValueChange={(value) => setDataSize(value[0])}
               />
             </div>
+
+            
             <Button onClick={handleGenerateData} className="w-full" variant="outline">
               <RefreshCw className="mr-2 h-4 w-4" />
               Generate Random Data
             </Button>
+
+            {/* Need to add to back-end later */}
             <div className="relative">
               <Button onClick={() => fileInputRef.current?.click()} className="w-full" variant="secondary">
                 <FileUp className="mr-2 h-4 w-4" />
@@ -133,20 +155,22 @@ export default function Home() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Index</TableHead>
-                        <TableHead>Value</TableHead>
+                        <TableHead>Int</TableHead>
+                        <TableHead>String</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {dataset.length > 0 ? (
-                        dataset.slice(0, 100).map((value, index) => (
+                        dataset.slice(0, 100).map((item, index) => (
                           <TableRow key={index}>
                             <TableCell>{index}</TableCell>
-                            <TableCell>{value}</TableCell>
+                            <TableCell>{item.int}</TableCell>
+                            <TableCell>{item.string}</TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={2} className="text-center">
+                          <TableCell colSpan={3} className="text-center">
                             No data available
                           </TableCell>
                         </TableRow>
